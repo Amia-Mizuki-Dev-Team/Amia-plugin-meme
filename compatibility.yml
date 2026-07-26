@@ -1,0 +1,20 @@
+gensokyo:
+  last_verified_release: "009"
+  verified_at: "2026-07-25T14:29:00Z"
+  baseline_commit: "194c140c674a3e665d911efdad56e411edbe8720"
+  verification:
+    status: partial
+    evidence:
+      - "tests/test_release009_smoke.py::test_plugin_import_matchers_and_dependency_degradation"
+      - "tests/test_release009_smoke.py::test_key_image_processing_and_safe_manager_state"
+  modes:
+    string_message: false
+    array_message: false
+    use_uin_true: false
+    use_uin_false: false
+    markdown: false
+    keyboard: false
+  automated_tested: false
+  live_tested: false
+  known_issues:
+    - "Release009 shared fixtures pass; repository-specific integration is pending."
