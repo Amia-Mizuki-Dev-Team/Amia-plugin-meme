@@ -31,30 +31,90 @@ from PIL import Image, ImageDraw, ImageFont
 # ================= 1. 插件元数据 =================
 __plugin_meta__ = PluginMetadata(
     name="Meme随机 (Final V40.9)",
-    description="本地存图版：最近上传修复、全局随机、纯文本帮助",
+    description="本地图库：中文帮助、随机发送、上传和分类管理",
     usage=(
-        "🤖 Mizuki Bot 表情包系统操作手册\n"
-        "============================\n"
-        "【基础指令】\n"
-        "• 表情帮助 / meme帮助 / meme list\n"
-        "• 发送 [文件夹名]\n"
-        "• 随机meme / 随一张\n"
-        "• 查看 [图片名]\n"
-        "• 看所有 [文件夹名]\n"
+        "🤖 Mizuki Bot 表情包\n"
         "\n"
-        "【上传系统】\n"
-        "• [文件夹] 上传 [图/回复ZIP] → 存入Bot图库\n"
+        "【常用功能】\n"
+        "• 表情帮助 / 表情列表\n"
+        "• 随机表情 / 随一张\n"
+        "• 发送 <文件夹名>\n"
+        "• 查看 <图片名>\n"
+        "• 看所有 <文件夹名>\n"
         "\n"
-        "【管理员指令】\n"
-        "• 最近上传         → 查看入库记录\n"
-        "• 删除 [图片名]    → 删图并清除记录\n"
-        "• 溯源 [图片名]    → 查上传者\n"
-        "• 锁定/解锁 [文件夹]\n"
-        "• 屏蔽群/解除屏蔽 [群号]"
+        "【上传】\n"
+        "• <文件夹名> 上传（配图或回复 ZIP）"
     ),
     type="application",
     homepage="",
     supported_adapters={"~onebot.v11"},
+    extra={
+        "author": "Amia-Mizuki-Dev-Team",
+        "version": "010",
+        "pmn": {"markdown": True},
+        # PicMenu 面向普通成员只展示稳定的中文用户功能；管理命令仍然
+        # 保留在代码中，但从默认帮助菜单隐藏，避免把后台操作当成按钮。
+        "menu_data": [
+            {
+                "func": "表情列表",
+                "trigger_method": "指令",
+                "trigger_condition": "表情列表",
+                "brief_des": "查看当前可用的表情分类",
+                "detail_des": "只显示当前用户有权限访问且包含图片的分类。",
+            },
+            {
+                "func": "随机表情",
+                "trigger_method": "指令",
+                "trigger_condition": "随机表情 / 随一张",
+                "brief_des": "从可用图库随机发送一张图片",
+                "detail_des": "受到分类权限和群屏蔽设置限制。",
+            },
+            {
+                "func": "发送分类表情",
+                "trigger_method": "指令",
+                "trigger_condition": "发送 <文件夹名>",
+                "brief_des": "从指定分类发送下一张图片",
+                "detail_des": "同一用户会尽量轮换图片，发送完分类后重新开始。",
+            },
+            {
+                "func": "查看图片",
+                "trigger_method": "指令",
+                "trigger_condition": "查看 <图片名>",
+                "brief_des": "按文件名查看一张图片",
+                "detail_des": "图片名支持中文、字母、数字、下划线和常见扩展名。",
+            },
+            {
+                "func": "查看分类预览",
+                "trigger_method": "指令",
+                "trigger_condition": "看所有 <文件夹名>",
+                "brief_des": "生成指定分类的图片预览图",
+                "detail_des": "最多生成前 500 张，超出部分会截断。",
+            },
+            {
+                "func": "上传表情",
+                "trigger_method": "指令",
+                "trigger_condition": "<文件夹名> 上传",
+                "brief_des": "向指定分类上传图片或 ZIP",
+                "detail_des": "请配图或回复 ZIP；重复图片会被检测。",
+            },
+            {
+                "func": "最近上传",
+                "trigger_method": "管理员指令",
+                "trigger_condition": "最近上传",
+                "brief_des": "查看最近入库记录",
+                "detail_des": "仅管理员可用。",
+                "pmn_hidden": True,
+            },
+            {
+                "func": "图库管理",
+                "trigger_method": "管理员指令",
+                "trigger_condition": "删除 / 溯源 / 锁定 / 屏蔽群",
+                "brief_des": "管理图片、分类和群屏蔽",
+                "detail_des": "仅管理员可用。",
+                "pmn_hidden": True,
+            },
+        ],
+    },
 )
 
 # ================= 2. 配置与常量 =================
@@ -459,12 +519,12 @@ async def startup_task():
 # ================= 7. 业务指令 =================
 
 # 加入了 meme帮助 的正则匹配
-help_cmd = on_regex(r"^(\u8868\u60c5\u5e2e\u52a9|memehelp|meme\u5e2e\u52a9)$", priority=5, block=True)
+help_cmd = on_regex(r"^(\u8868\u60c5\u5e2e\u52a9|\u8868\u60c5\u5305\u5e2e\u52a9|memehelp|meme\u5e2e\u52a9)$", priority=5, block=True)
 @help_cmd.handle()
 async def _(event: Event):
     await help_cmd.finish(__plugin_meta__.usage)
 
-list_meme = on_regex(r"^(meme\s*list|\u8868\u60c5\u5217\u8868)$", priority=5, block=True)
+list_meme = on_regex(r"^(meme\s*list|\u8868\u60c5\u5217\u8868|\u8868\u60c5\u5305\u5217\u8868|\u56fe\u5e93\u5217\u8868)$", priority=5, block=True)
 @list_meme.handle()
 async def _(event: Event):
     folders = [d.name for d in IMAGE_DIR.iterdir() if d.is_dir()]
@@ -500,7 +560,7 @@ async def _(bot: Bot, event: Event):
     except Exception as e:
         await recent_cmd.finish(f"生成报表失败: {e}")
 
-random_cmd = on_regex(r"^(随机meme|随一张)$", priority=4, block=True)
+random_cmd = on_regex(r"^(随机meme|随机表情|随机图片|随一张)$", priority=4, block=True)
 @random_cmd.handle()
 async def _(bot: Bot, event: Event):
     if isinstance(event, GroupMessageEvent):

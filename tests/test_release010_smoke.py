@@ -26,7 +26,7 @@ def _load_plugin_in_temp_dir():
     with TemporaryDirectory() as temp_dir:
         temp_file = Path(temp_dir) / "meme_smoke.py"
         temp_file.write_bytes(PLUGIN_FILE.read_bytes())
-        module_name = "release009_meme_smoke"
+        module_name = "release010_meme_smoke"
         # Force the optional connector branch without contacting any database.
         with patch.dict(
             sys.modules,
@@ -39,7 +39,7 @@ def _load_plugin_in_temp_dir():
         return module
 
 
-class Release009MemeSmokeTests(unittest.TestCase):
+class Release010MemeSmokeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.module = _load_plugin_in_temp_dir()
@@ -49,6 +49,12 @@ class Release009MemeSmokeTests(unittest.TestCase):
         for matcher_name in ("help_cmd", "list_meme", "upload_cmd"):
             self.assertTrue(callable(getattr(self.module, matcher_name).handle))
         self.assertIsNone(self.module.db.conn)
+        self.assertIn("表情列表", self.module.__plugin_meta__.usage)
+        menu_data = self.module.__plugin_meta__.extra["menu_data"]
+        self.assertIn("随机表情", {item["func"] for item in menu_data})
+        self.assertTrue(
+            next(item for item in menu_data if item["func"] == "图库管理")["pmn_hidden"]
+        )
 
     def test_key_image_processing_and_safe_manager_state(self):
         manager = self.module.MemeManager()
