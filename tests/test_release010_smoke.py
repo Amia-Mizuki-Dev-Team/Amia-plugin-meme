@@ -3,6 +3,7 @@ import sys
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from PIL import Image
@@ -55,6 +56,28 @@ class Release010MemeSmokeTests(unittest.TestCase):
         self.assertTrue(
             next(item for item in menu_data if item["func"] == "图库管理")["pmn_hidden"]
         )
+
+    def test_unavailable_database_is_cooled_down_without_repeated_connect(self):
+        attempts = 0
+
+        def fail_connect(**_kwargs):
+            nonlocal attempts
+            attempts += 1
+            raise RuntimeError("MySQL 2013")
+
+        fake_mysql = SimpleNamespace(
+            connector=SimpleNamespace(connect=fail_connect)
+        )
+        with patch.object(self.module, "mysql", fake_mysql), patch.object(
+            self.module, "logger"
+        ) as log:
+            database = self.module.MemeDatabase()
+            self.assertIsNone(database._get_cursor())
+            self.assertIsNone(database._get_cursor())
+
+        self.assertEqual(attempts, 1)
+        log.warning.assert_called_once()
+        log.error.assert_not_called()
 
     def test_key_image_processing_and_safe_manager_state(self):
         manager = self.module.MemeManager()
